@@ -18,14 +18,14 @@ export class Firebase {
             appId: "1:952773955718:web:45037ae26d9dee53a8c107"
           };
 
-        if(!this._initialized){
+        if(!window._initializedFirebase){
             firebase.initializeApp(firebaseConfig);
 
             firebase.firestore().settings({
                 timestampsInSnapshots: true
             })
 
-            this._initialized = true;
+            window._initializedFirebase = true;
 
         }
           
