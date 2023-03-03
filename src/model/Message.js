@@ -296,21 +296,102 @@ export class Message extends Model{
 
     }
 
+    static upload(file){
+
+        return new Promise ((s, f)=>{
+
+            let uploadTask = Firebase.hd().ref(from).child(Date.now() + '_' + file.name).put(file);
+     
+            uploadTask.on('state_changed', e => {
+ 
+                console.info('upload', e);
+ 
+            }, err => {
+                f(err);
+            }, () => {
+ 
+                s(uploadTask.snapshot);
+
+            });
+
+        })
+
+        
+        
+    }
+
+    static sendDocument(chatId, from, file, filePreview){
+
+        Message.send(chatId, from, 'document').then(msgRef => {
+
+            Message.upload(file).then(snapshot=>{
+
+            let downloadFile = snapshot.downloadURL
+
+            Message.upload(filePreview).then(snapshot2=>{
+
+                let downloadPreview = snapshot2.downloadURL
+                
+
+                msgRef.set({
+                    content: downloadFile,
+                    preview: downloadPreview,
+                    filename: file.name,
+                    size: file.size,
+                    fileType: file.type,
+                    status: 'sent'
+                }, {
+                    merge:true
+                })
+
+            });
+
+        });
+
+    })
+
+
+    }
+
     static sendImage(chatId, from, file)
     {
      
-            return new Promise((s, f) => {
+        {
+         
+                return new Promise((s, f) => {
+         
+                    let uploadTask = Firebase.hd().ref(from).child(Date.now() + '_' + file.name).put(file);
+         
+                    uploadTask.on('state_changed', e => {
+         
+                        // console.info('upload', e);
+         
+                    }, err => {
+                        console.error(err)
+                    }, () => {
+         
+                        uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
+                            Message.send(
+                                chatId, 
+                                from, 
+                                'image', 
+                                downloadURL                    
+                            ).then(() => {
+                                s();
+                            });
+                        });
+                 
+                    });
+         
+                });
+         
+        }
+
+
+            /*return new Promise((s, f) => {
      
-                let uploadTask = Firebase.hd().ref(from).child(Date.now() + '_' + file.name).put(file);
-     
-                uploadTask.on('state_changed', e => {
-     
-                    // console.info('upload', e);
-     
-                }, err => {
-                    console.error(err)
-                }, () => {
-     
+                Message.upload(file).then(snapshot=>{
+
                     uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
                         Message.send(
                             chatId, 
@@ -318,13 +399,15 @@ export class Message extends Model{
                             'image', 
                             downloadURL                    
                         ).then(() => {
+
                             s();
+
                         });
                     });
-             
-                });
+
+                })
      
-            });
+            });*/
      
     }
 
